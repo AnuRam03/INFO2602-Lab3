@@ -70,8 +70,9 @@ def user_login_view():
 # Task 3.3 Here
 @app.route('/identify')
 @jwt_required()
+#@login_required(Admin) #for only Admins to login alone
 def identify_view():
-  username = get_jwt_identity()
+  username = get_jwt_identity() #helps us get attributes for the user (eg id, username) from the cookie
   user = User.query.filter_by(username=username).first()
   if user:
     return jsonify(user.get_json())
@@ -81,15 +82,15 @@ def identify_view():
 @app.route('/logout', methods=['GET'])
 def logout():
   response = jsonify(message='Logged out')
-  unset_jwt_cookies(response)
+  unset_jwt_cookies(response) #send a response to delete the cookie (or supposedly invalidate that token to no long grant access)
   return response
   
 # Task 4 Here
-@app.route('/signup', methods=['POST'])
+@app.route('/signup', methods=['POST']) #taking in credentials
 def signup_user_view():
   data = request.json
-  try:
-    new_user = RegularUser(data['username'], data['email'], data['password'])
+  try: #prevent duplication
+    new_user = RegularUser(data['username'], data['email'], data['password']) #get the data by fields
     db.session.add(new_user)
     db.session.commit()
     return jsonify(message=f'User {new_user.id} - {new_user.username} created!'), 201
@@ -134,9 +135,9 @@ def get_todo_view(id):
   
 # Task 5.4 Here PUT /todos/id
 @app.route('/todos/<int:id>', methods=['PUT'])
-@login_required(RegularUser)
+@login_required(RegularUser) #restricted to a regular user
 def edit_todo_view(id):
-  data = request.json
+  data = request.json #get the data from the form
   user = RegularUser.query.filter_by(username=get_jwt_identity()).first()
 
   todo = Todo.query.get(id)
